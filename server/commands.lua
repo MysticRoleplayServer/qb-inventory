@@ -27,6 +27,12 @@ QBCore.Commands.Add('giveitem', 'Give An Item (Admin Only)', { { name = 'id', he
                 info.quality = 100
             elseif itemData['name'] == 'harness' then
                 info.uses = 20
+            -- elseif itemData['type'] == 'mdtcitation' then
+            --     info.citizenid = player.PlayerData.citizenid
+            --     info.fine  = data.fine
+            --     info.date = data.time
+            --     info.incidentId = data.incidentId
+            --     info.officer = data.officers
             elseif itemData['name'] == 'markedbills' then
                 info.worth = math.random(5000, 10000)
             elseif itemData['name'] == 'printerdocument' then
