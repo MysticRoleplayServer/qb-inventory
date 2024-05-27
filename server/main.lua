@@ -256,16 +256,18 @@ QBCore.Functions.CreateCallback('qb-inventory:server:createDrop', function(sourc
     end
 end)
 
-QBCore.Functions.CreateCallback('qb-inventory:server:attemptPurchase', function(source, cb, data)
+QBCore.Functions.CreateCallback('qb-inventory:server:attemptPurchase', function(source, cb, data) -- ps-mdt
     local itemInfo = data.item
     local amount = data.amount
     local shop = string.gsub(data.shop, 'shop%-', '')
     local price = itemInfo.price * amount
     local Player = QBCore.Functions.GetPlayer(source)
+
     if not Player then
         cb(false)
         return
     end
+
     if not CanAddItem(source, itemInfo.name, amount) then
         TriggerClientEvent('QBCore:Notify', source, 'Cannot hold item', 'error')
         cb(false)
@@ -274,8 +276,53 @@ QBCore.Functions.CreateCallback('qb-inventory:server:attemptPurchase', function(
 
     if Player.PlayerData.money.cash >= price then
         Player.Functions.RemoveMoney('cash', price, 'shop-purchase')
-        AddItem(source, itemInfo.name, amount, nil, itemInfo.info, 'shop-purchase')
+
+        if QBCore.Shared.SplitStr(itemInfo.name, "_")[1] == "weapon" then
+            itemInfo.info.serie = tostring(QBCore.Shared.RandomInt(2) .. QBCore.Shared.RandomStr(3) .. QBCore.Shared.RandomInt(1) .. QBCore.Shared.RandomStr(2) .. QBCore.Shared.RandomInt(3) .. QBCore.Shared.RandomStr(4))
+            itemInfo.info.quality = 100
+        end
+
+        AddItem(source, itemInfo.name, amount, nil, itemInfo.info)
         TriggerEvent('qb-shops:server:UpdateShopItems', shop, itemInfo, amount)
+        TriggerClientEvent('qb-shops:client:UpdateShop', source, shop, itemInfo, amount)
+        
+        if QBCore.Shared.SplitStr(itemInfo.name, "_")[1] == "weapon" then
+            local serial = itemInfo.info.serie
+            local imageurl = ("https://cfx-nui-qb-inventory/html/images/%s.png"):format(itemInfo.name)
+            local notes = "Purchased at Ammunation"
+            local owner = Player.PlayerData.charinfo.firstname .. " " .. Player.PlayerData.charinfo.lastname
+            local weapClass = 1
+            local weapModel = QBCore.Shared.Items[itemInfo.name].label
+            exports['ps-mdt']:CreateWeaponInfo(serial, imageurl, notes, owner, weapClass, weapModel)
+        end
+
+        QBCore.Functions.Notify(source, itemInfo.label .. " bought!", "success")
+        TriggerEvent("qb-log:server:CreateLog", "shops", "Shop item bought", "green", "**"..GetPlayerName(source) .. "** bought a " .. itemInfo.label .. " for $" .. price)
+        cb(true)
+    elseif Player.PlayerData.money.bank >= price then
+        Player.Functions.RemoveMoney('bank', price, 'shop-purchase')
+
+        if QBCore.Shared.SplitStr(itemInfo.name, "_")[1] == "weapon" then
+            itemInfo.info.serie = tostring(QBCore.Shared.RandomInt(2) .. QBCore.Shared.RandomStr(3) .. QBCore.Shared.RandomInt(1) .. QBCore.Shared.RandomStr(2) .. QBCore.Shared.RandomInt(3) .. QBCore.Shared.RandomStr(4))
+            itemInfo.info.quality = 100
+        end
+
+        AddItem(source, itemInfo.name, amount, nil, itemInfo.info)
+        TriggerEvent('qb-shops:server:UpdateShopItems', shop, itemInfo, amount)
+        TriggerClientEvent('qb-shops:client:UpdateShop', source, shop, itemInfo, amount)
+        
+        if QBCore.Shared.SplitStr(itemInfo.name, "_")[1] == "weapon" then
+            local serial = itemInfo.info.serie
+            local imageurl = ("https://cfx-nui-qb-inventory/html/images/%s.png"):format(itemInfo.name)
+            local notes = "Purchased at Ammunation"
+            local owner = Player.PlayerData.charinfo.firstname .. " " .. Player.PlayerData.charinfo.lastname
+            local weapClass = 1
+            local weapModel = QBCore.Shared.Items[itemInfo.name].label
+            exports['ps-mdt']:CreateWeaponInfo(serial, imageurl, notes, owner, weapClass, weapModel)
+        end
+
+        QBCore.Functions.Notify(source, itemInfo.label .. " bought!", "success")
+        TriggerEvent("qb-log:server:CreateLog", "shops", "Shop item bought", "green", "**"..GetPlayerName(source) .. "** bought a " .. itemInfo.label .. " for $" .. price)
         cb(true)
     else
         TriggerClientEvent('QBCore:Notify', source, 'You do not have enough money', 'error')
