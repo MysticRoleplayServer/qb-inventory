@@ -574,3 +574,33 @@ RegisterNetEvent('qb-inventory:server:SetInventoryData', function(fromInventory,
         end
     end
 end)
+
+-- adminpanel BELOW
+
+local function wipeInventory(invid)
+	if Inventories[invid] then
+		Inventories[invid] = nil
+		MySQL.prepare('INSERT INTO inventories (identifier, items) VALUES (?, ?) ON DUPLICATE KEY UPDATE items = ?', { invid, '[]', '[]' })
+	end
+end
+
+local function saveInventories(invid)
+	if Inventories[invid] then
+		local data = Inventories[invid]
+		MySQL.prepare('INSERT INTO inventories (identifier, items) VALUES (?, ?) ON DUPLICATE KEY UPDATE items = ?', { invid, json.encode(data.items), json.encode(data.items) })
+	end
+end
+
+local function getInventory(id)
+    if Inventories[id] then
+        return Inventories[id]
+    else
+        return nil
+    end
+end
+
+exports("wipeTrunk", wipeInventory) -- only wipe from inventory
+exports("wipeGlove", wipeInventory) -- only wipe from inventory
+exports("wipeStash", wipeInventory) -- only wipe from inventory
+exports("saveInventories", saveInventories) --used to save inventory in database
+exports("getInventory", getInventory) --used to get inventory in database
